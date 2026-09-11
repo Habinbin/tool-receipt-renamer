@@ -1,0 +1,173 @@
+{
+	"_": "골든셋 — 사람이 이미지를 직접 읽어 매긴 정답. 파일명은 랜덤이며 단서가 없다.",
+	"_note": "expected 가 정답, accept 는 정답으로 인정하는 대체 표기. amount: null 은 \"금액이 없는 문서\".",
+	"receipts": [
+		{
+			"file": "20260618_114552.png",
+			"trap": "가맹점명이 \"고속버스승차권(KOBUS\" 로 잘려 있다. 20260628 과 같은 거래(승인번호 동일) — 파일명 충돌 사례.",
+			"expected": {
+				"date": "2026-07-02",
+				"documentType": "매출전표",
+				"merchantName": "고속버스승차권(KOBUS)",
+				"amount": 36000,
+				"currency": "KRW",
+				"expenseCategory": "교통",
+				"paymentMethod": "카드",
+				"invoiceNumber": "28124330"
+			},
+			"accept": {
+				"documentType": ["카드매출전표", "온라인전표", "카드전표", "전표", "영수증"],
+				"merchantName": [
+					"고속버스승차권",
+					"KOBUS",
+					"고속버스승차권(KOBUS",
+					"고속버스통합예매",
+					"카카오뱅크"
+				],
+				"paymentMethod": ["체크카드", "카드(체크)", "신용카드"]
+			},
+			"sha256": "8530a53073ee5080"
+		},
+		{
+			"file": "20260623_136253.jpg",
+			"trap": "카드전표를 비스듬히 찍은 사진. 총합계(60,000)와 거래금액(54,546)이 따로 있다 — 총액을 골라야 한다.",
+			"expected": {
+				"date": "2026-06-23",
+				"documentType": "매출전표",
+				"merchantName": "어선e",
+				"amount": 60000,
+				"currency": "KRW",
+				"expenseCategory": "식비",
+				"paymentMethod": "카드",
+				"invoiceNumber": "29123277"
+			},
+			"accept": {
+				"documentType": ["카드전표", "신용카드매출전표", "영수증", "매출표"],
+				"paymentMethod": ["체크카드", "신용카드"]
+			},
+			"sha256": "ba668923e7d12447"
+		},
+		{
+			"file": "20260628_232606.jpg",
+			"trap": "KOBUS 영수증. 20260618 과 같은 거래다.",
+			"expected": {
+				"date": "2026-07-02",
+				"documentType": "영수증",
+				"merchantName": "전북고속",
+				"amount": 36000,
+				"currency": "KRW",
+				"expenseCategory": "교통",
+				"paymentMethod": "카드",
+				"invoiceNumber": "28124330"
+			},
+			"accept": {
+				"documentType": ["고속버스 영수증", "매출전표", "카드전표"],
+				"merchantName": ["고속버스통합예매", "고속버스", "전북고속(고속버스)"],
+				"paymentMethod": ["신용카드"]
+			},
+			"sha256": "99a29b46f0dec661"
+		},
+		{
+			"file": "20260724_115138.jpg",
+			"trap": "승차권(검표완료). 금액이 아예 없다 — amount 는 null 이어야 한다. 좌석 09.",
+			"expected": {
+				"date": "2026-07-02",
+				"documentType": "승차권",
+				"merchantName": "전북고속",
+				"amount": null,
+				"currency": "KRW",
+				"expenseCategory": "교통",
+				"paymentMethod": "",
+				"invoiceNumber": "20260702-995-57-2811"
+			},
+			"accept": {
+				"documentType": ["탑승권", "티켓", "확인증", "고속버스 승차권"],
+				"merchantName": ["고속버스통합예매", "고속버스"],
+				"paymentMethod": ["미확인", ""],
+				"invoiceNumber": ["36050009", "202607029955720811"]
+			},
+			"sha256": "9dd6510f17063a42"
+		},
+		{
+			"file": "IMG_8164.jpg",
+			"trap": "사람이 붙인 원본 파일명(\"고향국밥\")이 틀렸던 건. 실제 가맹점은 위대한국밥.",
+			"expected": {
+				"date": "2026-06-24",
+				"documentType": "매출전표",
+				"merchantName": "위대한국밥",
+				"amount": 40000,
+				"currency": "KRW",
+				"expenseCategory": "식비",
+				"paymentMethod": "카드",
+				"invoiceNumber": "20123352"
+			},
+			"accept": {
+				"documentType": ["신용카드전표", "카드전표", "영수증"],
+				"paymentMethod": ["신용카드", "체크카드"],
+				"invoiceNumber": ["20260624-01-0029"]
+			},
+			"sha256": "632a305d60ff0a52"
+		},
+		{
+			"file": "scan_018.jpg",
+			"trap": "품목 단가(10,000)·과세물품가액(27,273)이 총액(30,000)과 섞여 있다.",
+			"expected": {
+				"date": "2026-07-04",
+				"documentType": "영수증",
+				"merchantName": "위대한국밥",
+				"amount": 30000,
+				"currency": "KRW",
+				"expenseCategory": "식비",
+				"paymentMethod": "카드",
+				"invoiceNumber": "27124592"
+			},
+			"accept": {
+				"documentType": ["매출전표", "신용카드전표"],
+				"paymentMethod": ["신용카드", "체크카드"],
+				"invoiceNumber": ["20260704-01-0024"]
+			},
+			"sha256": "cb6dd38597968d29"
+		},
+		{
+			"file": "scan_063.jpg",
+			"trap": "승차권 2/2. 금액 없음. 좌석 24 — 좌석 09 과 한 글자만 다르다.",
+			"expected": {
+				"date": "2026-07-02",
+				"documentType": "승차권",
+				"merchantName": "전북고속",
+				"amount": null,
+				"currency": "KRW",
+				"expenseCategory": "교통",
+				"paymentMethod": "",
+				"invoiceNumber": "20260702-995-57-2812"
+			},
+			"accept": {
+				"documentType": ["탑승권", "티켓", "확인증", "고속버스 승차권"],
+				"merchantName": ["고속버스통합예매", "고속버스"],
+				"paymentMethod": ["미확인", ""],
+				"invoiceNumber": ["36050024", "202607029955720812"]
+			},
+			"sha256": "e5ab7a13119f949e"
+		},
+		{
+			"file": "scan_097.jpg",
+			"trap": "영수증번호가 20260630-01-0032 인데 실제 승인일시는 2026-07-01. 헤더 숫자를 날짜로 읽으면 오답.",
+			"expected": {
+				"date": "2026-07-01",
+				"documentType": "매출전표",
+				"merchantName": "위대한국밥",
+				"amount": 30000,
+				"currency": "KRW",
+				"expenseCategory": "식비",
+				"paymentMethod": "카드",
+				"invoiceNumber": "27124007"
+			},
+			"accept": {
+				"documentType": ["신용카드전표", "카드전표", "영수증"],
+				"paymentMethod": ["신용카드", "체크카드"],
+				"invoiceNumber": ["20260630-01-0032"]
+			},
+			"sha256": "87dab26bb22028f0"
+		}
+	]
+}

@@ -1,0 +1,10 @@
+# 워크스페이스를 나누려는 게 아니라, pnpm 11 이 빌드 스크립트 승인을 여기서만 읽기 때문에 둔다.
+# 승인이 없으면 esbuild(vite 의 의존)가 막히고 `pnpm install` 이 1 로 끝나 게이트가 거기서 멈춘다.
+#
+# 두 키를 다 적는 이유: `allowBuilds` 는 pnpm 11, `onlyBuiltDependencies` 는 pnpm 10(Vercel)이 읽는다.
+# 후자는 반드시 리스트로 둔다 — 스칼라면 pnpm 10 이
+# "settings.onlyBuiltDependencies.push is not a function" 으로 죽는다.
+allowBuilds:
+  esbuild: true
+onlyBuiltDependencies:
+  - esbuild

@@ -1,0 +1,47 @@
+{
+	"name": "@betlab/tool-receipt-renamer",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "영수증 이미지·PDF를 뭉텅이로 넣으면 저장해 둔 규칙대로 이름을 붙여 ZIP으로 내보내는 toolbox 툴",
+	"exports": {
+		".": "./src/index.ts",
+		"./server": "./src/server/handler.ts"
+	},
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.app.json",
+		"test": "vitest run",
+		"bench": "tsx bench/run.ts",
+		"format": "prettier --write .",
+		"lint": "prettier --check ."
+	},
+	"peerDependencies": {
+		"@fontsource-variable/noto-sans-kr": "^5.3.0",
+		"@lucide/svelte": "^1.17.0",
+		"jszip": "^3.10.1",
+		"pdfjs-dist": "^6.0.227",
+		"svelte": "^5.55.2"
+	},
+	"devDependencies": {
+		"@fontsource-variable/noto-sans-kr": "^5.3.0",
+		"@lucide/svelte": "^1.17.0",
+		"@sveltejs/adapter-vercel": "^6.3.3",
+		"@sveltejs/kit": "^2.57.0",
+		"@sveltejs/vite-plugin-svelte": "^7.0.0",
+		"@types/node": "^24.10.1",
+		"jszip": "^3.10.1",
+		"pdfjs-dist": "^6.0.227",
+		"prettier": "^3.9.6",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte": "^5.55.2",
+		"svelte-check": "^4.4.6",
+		"tsx": "^4.20.6",
+		"typescript": "^6.0.2",
+		"vite": "^8.0.7",
+		"vitest": "^4.1.3"
+	}
+}

@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+.svelte-kit/
+.vercel/
+build/
+
+# 실제 영수증 — 개인정보다. 정답지(fixtures/golden.json)만 커밋한다.
+fixtures/receipts/
+fixtures/prepared/
+bench/results/
+
+# 로컬 전용 — 키는 커밋하지 않는다
+.env
