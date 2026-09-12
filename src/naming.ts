@@ -34,16 +34,19 @@ export const FIELD_ORDER: ReceiptField[] = [
 ];
 
 /**
- * 태그 칩의 색 인덱스.
+ * 항목을 잇는 색의 칸.
  *
- * 칩에는 글자가 있지만, 여러 개가 한 줄에 흐르면 **색이 먼저 읽힌다** — 규칙 카드와
- * 편집 패널을 나란히 놓았을 때 같은 조각인지 대조하는 것도 색이다. 그래서 필드마다
- * 고정된 칸을 준다. 색값 자체는 `ui/theme.css` 의 `--tag-*` 에만 있다 (@design-contract).
+ * **범주를 칠하는 색이 아니다.** 편집 화면은 항목 칩과 결과 이름의 해당 부분을 같은
+ * 색으로 칠해 둘이 같은 것임을 보인다 — 색이 혼자서 뜻을 갖는 게 아니라 **두 자리가
+ * 짝지어진 것**을 보이는 데 쓴다 (@color-is-not-structure §같은 것을 잇는 색).
  *
- * `FIELD_ORDER` 의 자리를 그대로 쓰므로, 필드를 추가하면 팔레트도 같이 늘려야 한다.
+ * 그래서 자리는 `FIELD_ORDER` 로 고정한다. 순서를 바꾸는 중에 색이 따라 움직이면
+ * 무엇이 어디로 갔는지 눈으로 쫓을 수 없다.
+ *
+ * 직접 입력한 문구는 읽어 온 값이 아니라 사람이 적은 글자라 이을 짝이 없다 — `null`.
  */
-export function fieldColorIndex(token: NamingToken): number | null {
-	if (token.kind === 'custom') return null; // 고정문구는 중립색 — 추출값이 아니다
+export function fieldToneIndex(token: NamingToken): number | null {
+	if (token.kind === 'custom') return null;
 	const index = FIELD_ORDER.indexOf(token.field);
 	return index < 0 ? null : index;
 }
@@ -172,14 +175,84 @@ export function missingTokenLabels(
 		.map(tokenLabel);
 }
 
+/**
+ * 이름 한 조각과, 그 조각을 만든 항목.
+ *
+ * 편집 화면은 칩과 결과 이름을 **같은 색으로 이어** 무엇이 무엇이 됐는지 보인다.
+ * 이으려면 결과가 통짜 문자열이 아니라 출처를 단 조각이어야 한다.
+ */
+export interface NameSegment {
+	/** 화면에 그대로 찍히는 글자. */
+	text: string;
+	/** 이 글자를 만든 항목. 구분자·확장자·되돌아간 원본 이름은 `null`. */
+	tokenId: string | null;
+}
+
+/**
+ * 이름을 조각으로 쪼개 돌려준다. `composeBaseName` 이 이것을 이어 붙인 것이므로
+ * **둘이 갈라질 수 없다** — 화면이 색으로 약속한 매칭과 실제 파일명이 어긋나지 않는다.
+ */
+export function baseSegments(
+	info: ReceiptInfo,
+	originalName: string,
+	rule: NamingRule
+): NameSegment[] {
+	const filled = rule.tokens
+		.map((token) => ({ token, value: tokenValue(token, info, originalName, rule) }))
+		.filter(({ value }) => value.length > 0);
+
+	const segments: NameSegment[] =
+		filled.length > 0
+			? filled.flatMap(({ token, value }, index) =>
+					index === 0
+						? [{ text: value, tokenId: token.id }]
+						: [
+								{ text: rule.separator, tokenId: null },
+								{ text: value, tokenId: token.id }
+							]
+				)
+			: // 규칙이 아무것도 못 채웠으면 원본 이름으로 돌아간다. 빈 파일명은 만들지 않는다.
+				[{ text: sanitizeToken(stemOf(originalName)) || 'receipt', tokenId: null }];
+
+	if (!rule.replaceSpacesWithUnderscore) return segments;
+
+	/*
+	 * 공백→밑줄은 **이어 붙인 뒤에** 걸어야 한다. 조각마다 따로 걸면 조각 끝과 다음
+	 * 조각 앞에 걸친 공백 한 줄기가 밑줄 둘이 된다. 그래서 이은 결과에 한 번 걸고,
+	 * 길이가 변한 만큼 조각 경계를 다시 잡는다.
+	 */
+	const joined = segments.map((segment) => segment.text).join('');
+	const replaced = joined.replace(/\s+/g, '_');
+	if (replaced === joined) return segments;
+
+	const out: NameSegment[] = [];
+	let cursor = 0;
+	let consumed = 0;
+	for (const segment of segments) {
+		// 이 조각이 끝나는 지점까지 원본에서 소비한 길이를 변환 후 좌표로 옮긴다.
+		consumed += segment.text.length;
+		const end = joined.slice(0, consumed).replace(/\s+/g, '_').length;
+		out.push({ text: replaced.slice(cursor, end), tokenId: segment.tokenId });
+		cursor = end;
+	}
+	return out.filter((segment) => segment.text.length > 0);
+}
+
 export function composeBaseName(info: ReceiptInfo, originalName: string, rule: NamingRule): string {
-	const parts = rule.tokens
-		.map((token) => tokenValue(token, info, originalName, rule))
-		.filter((part) => part.length > 0);
-	// 규칙이 아무것도 못 채웠으면 원본 이름으로 돌아간다. 빈 파일명은 만들지 않는다.
-	const fallback = sanitizeToken(stemOf(originalName)) || 'receipt';
-	const base = parts.length > 0 ? parts.join(rule.separator) : fallback;
-	return rule.replaceSpacesWithUnderscore ? base.replace(/\s+/g, '_') : base;
+	return baseSegments(info, originalName, rule)
+		.map((segment) => segment.text)
+		.join('');
+}
+
+/** `baseSegments` 에 확장자를 더한 것. `fileName` 과 한 쌍이다. */
+export function nameSegments(
+	info: ReceiptInfo,
+	originalName: string,
+	rule: NamingRule
+): NameSegment[] {
+	const segments = baseSegments(info, originalName, rule);
+	const ext = extOf(originalName);
+	return ext.length > 0 ? [...segments, { text: `.${ext}`, tokenId: null }] : segments;
 }
 
 export function fileName(info: ReceiptInfo, originalName: string, rule: NamingRule): string {

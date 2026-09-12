@@ -106,7 +106,7 @@
 							<ChevronDownIcon size={15} />
 						</IconButton>
 					</span>
-					<IconButton title="이 파일만 빼기" onclick={() => onremove(receipt.id)}>
+					<IconButton title="이 파일 제외" onclick={() => onremove(receipt.id)}>
 						<XIcon size={15} />
 					</IconButton>
 				</div>

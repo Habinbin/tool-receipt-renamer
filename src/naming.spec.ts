@@ -8,6 +8,7 @@ import {
 	formatAmount,
 	formatDate,
 	missingTokenLabels,
+	nameSegments,
 	resolveNames,
 	sanitizeToken,
 	uniqueName
@@ -129,6 +130,81 @@ describe('composeBaseName', () => {
 		});
 		const name = composeBaseName(info({ merchantName: '고속 버스', amount: 36000 }), 'a.jpg', r);
 		expect(name).not.toMatch(/\s/);
+	});
+});
+
+describe('nameSegments', () => {
+	const receipt = info({
+		date: '2026-07-02',
+		documentType: '영수증',
+		merchantName: '전북고속',
+		amount: 36000,
+		currency: 'KRW'
+	});
+
+	/*
+	 * 이 묶음이 지키는 것은 하나다 — **화면이 색으로 약속한 매칭과 실제 파일명이
+	 * 어긋나지 않는다.** 조각을 이어 붙이면 반드시 `fileName` 과 같아야 한다.
+	 */
+	function joined(i: ReceiptInfo, original: string, r: NamingRule): string {
+		return nameSegments(i, original, r)
+			.map((segment) => segment.text)
+			.join('');
+	}
+
+	it('이어 붙이면 fileName 과 같다', () => {
+		const r = rule({
+			tokens: [
+				createFieldToken('date'),
+				createFieldToken('documentType'),
+				createFieldToken('merchantName'),
+				createFieldToken('amount')
+			]
+		});
+		expect(joined(receipt, 'IMG_1.jpg', r)).toBe(fileName(receipt, 'IMG_1.jpg', r));
+	});
+
+	it('공백을 밑줄로 바꿔도 이어 붙인 값이 fileName 과 같다', () => {
+		// 조각마다 따로 변환하면 조각 경계에 걸친 공백 한 줄기가 밑줄 둘이 된다.
+		const r = rule({
+			replaceSpacesWithUnderscore: true,
+			separator: ' ',
+			tokens: [createFieldToken('merchantName'), createFieldToken('amount')]
+		});
+		const i = info({ merchantName: '고속 버스 ', amount: 36000 });
+		expect(joined(i, 'a.jpg', r)).toBe(fileName(i, 'a.jpg', r));
+	});
+
+	it('되돌아간 원본 이름에도 조각이 붙는다', () => {
+		const r = rule({ tokens: [] });
+		expect(joined(receipt, 'IMG_0421.jpg', r)).toBe(fileName(receipt, 'IMG_0421.jpg', r));
+	});
+
+	it('값이 있는 항목마다 그 항목의 id 를 단다', () => {
+		const date = createFieldToken('date');
+		const merchant = createFieldToken('merchantName');
+		const r = rule({ tokens: [date, merchant] });
+		const owners = nameSegments(receipt, 'IMG_1.jpg', r)
+			.filter((segment) => segment.tokenId !== null)
+			.map((segment) => segment.tokenId);
+		expect(owners).toEqual([date.id, merchant.id]);
+	});
+
+	it('구분자와 확장자는 어느 항목의 것도 아니다', () => {
+		const r = rule({ tokens: [createFieldToken('date'), createFieldToken('merchantName')] });
+		const orphans = nameSegments(receipt, 'IMG_1.jpg', r)
+			.filter((segment) => segment.tokenId === null)
+			.map((segment) => segment.text);
+		expect(orphans).toEqual(['_', '.jpg']);
+	});
+
+	it('못 읽어 빈 항목은 조각을 만들지 않는다', () => {
+		const r = rule({
+			emptyFieldPolicy: 'skip',
+			tokens: [createFieldToken('date'), createFieldToken('invoiceNumber')]
+		});
+		const i = info({ date: '2026-07-02' });
+		expect(nameSegments(i, 'a.jpg', r).filter((s) => s.tokenId !== null)).toHaveLength(1);
 	});
 });
 
