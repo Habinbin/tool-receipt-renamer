@@ -52,7 +52,16 @@
 			읽히지 않는다 — 색은 구별을 위한 것이지 글자를 대신하지 않는다.
 		*/
 		background-color: color-mix(in srgb, var(--tone) 14%, transparent);
-		color: color-mix(in srgb, var(--tone) 58%, var(--tag-shade));
+		/*
+			밝은 테마에서는 색조를 어둡게 내리고, 어두운 테마에서는 밀어 올린다.
+			한 방향만 쓰면 반대 테마에서 2:1 로 떨어져 글자가 사라진다 — gr-toolbox 의
+			다크 모드에서 실제로 그랬다. 어느 쪽인지는 호스트가 정한 `color-scheme` 이
+			알려 주므로 툴은 호스트를 몰라도 된다.
+		*/
+		color: light-dark(
+			color-mix(in srgb, var(--tone) 58%, var(--tag-shade-light)),
+			color-mix(in srgb, var(--tone) 78%, var(--tag-shade-dark))
+		);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
 		line-height: 1.4;
