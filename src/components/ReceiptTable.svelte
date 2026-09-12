@@ -11,6 +11,7 @@
 	import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw';
 	import XIcon from '@lucide/svelte/icons/x';
 
+	import IconButton from '../ui/IconButton.svelte';
 	import { FIELD_LABELS } from '../naming';
 	import type { ReceiptFile } from '../state.svelte';
 	import type { ReceiptInfo } from '../types';
@@ -80,22 +81,22 @@
 
 				<div class="actions">
 					{#if receipt.status === 'error'}
-						<button class="icon" onclick={() => onretry(receipt.id)} title="다시 읽기">
+						<IconButton title="다시 읽기" onclick={() => onretry(receipt.id)}>
 							<RotateCcwIcon size={15} />
-						</button>
+						</IconButton>
 					{/if}
-					<button
-						class="icon"
-						class:rotated={open}
-						onclick={() => (openId = open ? null : receipt.id)}
-						title="값 고치기"
-						aria-expanded={open}
-					>
-						<ChevronDownIcon size={15} />
-					</button>
-					<button class="icon" onclick={() => onremove(receipt.id)} title="이 파일만 빼기">
+					<span class="chevron" class:rotated={open}>
+						<IconButton
+							title="값 고치기"
+							aria-expanded={open}
+							onclick={() => (openId = open ? null : receipt.id)}
+						>
+							<ChevronDownIcon size={15} />
+						</IconButton>
+					</span>
+					<IconButton title="이 파일만 빼기" onclick={() => onremove(receipt.id)}>
 						<XIcon size={15} />
-					</button>
+					</IconButton>
 				</div>
 			</div>
 
@@ -194,7 +195,7 @@
 	}
 
 	.original {
-		color: var(--ink-faint);
+		color: var(--ink-muted);
 		font-size: var(--text-caption);
 	}
 
@@ -247,25 +248,13 @@
 		gap: var(--gap-l4);
 	}
 
-	.icon {
-		display: grid;
-		place-items: center;
-		width: 28px;
-		height: 28px;
-		border: none;
-		border-radius: var(--radius-control);
-		background-color: transparent;
-		color: var(--ink-muted);
-		cursor: pointer;
+	/* 회전은 버튼이 아니라 감싼 자리가 맡는다 — 버튼 정의는 한 곳(IconButton)에 둔다. */
+	.chevron {
+		display: inline-flex;
 		transition: transform 0.15s;
 	}
 
-	.icon:hover {
-		background-color: var(--surface-raised);
-		color: var(--ink);
-	}
-
-	.icon.rotated {
+	.chevron.rotated {
 		transform: rotate(180deg);
 	}
 
@@ -284,16 +273,6 @@
 		gap: var(--gap-l4);
 		font-size: var(--text-caption);
 		color: var(--ink-muted);
-	}
-
-	input {
-		border: 1px solid var(--line);
-		border-radius: var(--radius-control);
-		padding: 8px 12px;
-		background-color: var(--surface);
-		color: var(--ink);
-		font-family: var(--font);
-		font-size: var(--text-body-sm);
 	}
 
 	.warnings {

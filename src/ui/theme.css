@@ -118,3 +118,42 @@
 .tool-root select {
 	box-shadow: none;
 }
+
+/*
+ * 글자를 받는 컨트롤의 **단일 정의** (@control-contract #1).
+ *
+ * 화면마다 따로 적으면 같은 입력이 여기선 8px, 저기선 7px 로 갈라진다. 실제로
+ * 세 컴포넌트에 같은 규칙이 세 벌 있었다. 변형이 필요하면 여기에 추가한다.
+ *
+ * `select` 의 `padding-right` 는 건드리지 않는다 — 호스트의 폼 플러그인이 셰브론을
+ * 배경으로 그리며 그만큼을 예약해 두기 때문이다 (@control-contract #3).
+ */
+.tool-root input:not([type='checkbox']):not([type='radio']),
+.tool-root select,
+.tool-root textarea {
+	border: 1px solid var(--line);
+	border-radius: var(--radius-control);
+	padding: 8px 12px;
+	background-color: var(--surface);
+	color: var(--ink);
+	font-family: var(--font);
+	font-size: var(--text-body-sm);
+	line-height: 1.4;
+}
+
+.tool-root textarea {
+	resize: vertical;
+}
+
+/*
+ * 체크박스는 브라우저 기본 크기가 13px 라 WCAG 2.2 의 24px 에 못 미친다.
+ * 상자 자체를 24px 로 키우면 글자 옆에서 과하게 커 보이므로, 상자는 16px 로 두고
+ * **감싼 라벨 전체**를 누를 수 있게 한다 — 실제 클릭 대상은 라벨이다.
+ * ui-probe 는 input 만 재므로 target-too-small 경고가 남지만, 의도한 것이다.
+ */
+.tool-root input[type='checkbox'] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--accent);
+	cursor: pointer;
+}

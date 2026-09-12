@@ -14,6 +14,8 @@
 	import UploadIcon from '@lucide/svelte/icons/upload';
 	import XIcon from '@lucide/svelte/icons/x';
 
+	import Button from '../ui/Button.svelte';
+	import IconButton from '../ui/IconButton.svelte';
 	import { FIELD_LABELS, FIELD_ORDER, fileName, tokenLabel } from '../naming';
 	import {
 		addToken,
@@ -77,16 +79,14 @@
 		<div class="archive-head">
 			<h2>규칙</h2>
 			<div class="archive-actions">
-				<button class="icon" onclick={oncreate} title="새 규칙"><PlusIcon size={15} /></button>
-				<button class="icon" onclick={onduplicate} title="이 규칙 복제"
-					><CopyIcon size={15} /></button
+				<IconButton title="새 규칙" onclick={oncreate}><PlusIcon size={15} /></IconButton>
+				<IconButton title="이 규칙 복제" onclick={onduplicate}><CopyIcon size={15} /></IconButton>
+				<IconButton title="파일로 내보내기" onclick={onexport}
+					><DownloadIcon size={15} /></IconButton
 				>
-				<button class="icon" onclick={onexport} title="파일로 내보내기"
-					><DownloadIcon size={15} /></button
-				>
-				<button class="icon" onclick={() => fileInput.click()} title="파일에서 가져오기">
+				<IconButton title="파일에서 가져오기" onclick={() => fileInput.click()}>
 					<UploadIcon size={15} />
-				</button>
+				</IconButton>
 			</div>
 		</div>
 
@@ -101,14 +101,14 @@
 						<span class="rule-name">{rule.name}</span>
 						<span class="rule-sample">{fileName(sample.info, sample.originalName, rule)}</span>
 					</button>
-					<button
-						class="icon danger"
-						onclick={() => ondelete(rule.id)}
+					<IconButton
 						title="이 규칙 지우기"
+						danger
 						disabled={rules.length <= 1}
+						onclick={() => ondelete(rule.id)}
 					>
 						<TrashIcon size={14} />
-					</button>
+					</IconButton>
 				</li>
 			{/each}
 		</ul>
@@ -144,23 +144,27 @@
 								/>
 							{/if}
 							<div class="token-actions">
-								<button
-									class="icon"
+								<IconButton
+									title="앞으로"
 									disabled={index === 0}
 									onclick={() => onchange(moveToken(active, token.id, -1))}
-									title="앞으로"><ArrowUpIcon size={14} /></button
 								>
-								<button
-									class="icon"
+									<ArrowUpIcon size={14} />
+								</IconButton>
+								<IconButton
+									title="뒤로"
 									disabled={index === active.tokens.length - 1}
 									onclick={() => onchange(moveToken(active, token.id, 1))}
-									title="뒤로"><ArrowDownIcon size={14} /></button
 								>
-								<button
-									class="icon danger"
+									<ArrowDownIcon size={14} />
+								</IconButton>
+								<IconButton
+									title="빼기"
+									danger
 									onclick={() => onchange(removeToken(active, token.id))}
-									title="빼기"><XIcon size={14} /></button
 								>
+									<XIcon size={14} />
+								</IconButton>
 							</div>
 						</li>
 					{/each}
@@ -168,16 +172,16 @@
 
 				<div class="add-row">
 					{#each unused as field (field)}
-						<button
-							class="chip"
+						<Button
+							variant="chip"
 							onclick={() => onchange(addToken(active, createFieldToken(field)))}
 						>
 							+ {FIELD_LABELS[field]}
-						</button>
+						</Button>
 					{/each}
-					<button class="chip" onclick={() => onchange(addToken(active, createCustomToken()))}>
+					<Button variant="chip" onclick={() => onchange(addToken(active, createCustomToken()))}>
 						+ 고정문구
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -372,7 +376,7 @@
 
 	.rule-sample {
 		overflow: hidden;
-		color: var(--ink-faint);
+		color: var(--ink-muted);
 		font-family: var(--font-mono);
 		font-size: var(--text-caption);
 		text-overflow: ellipsis;
@@ -451,23 +455,6 @@
 		gap: var(--gap-l3);
 	}
 
-	.chip {
-		border: 1px dashed var(--line-strong);
-		border-radius: var(--radius-pill);
-		padding: 4px 12px;
-		background-color: transparent;
-		color: var(--ink-muted);
-		cursor: pointer;
-		font-family: var(--font);
-		font-size: var(--text-caption);
-	}
-
-	.chip:hover {
-		border-color: var(--accent);
-		border-style: solid;
-		color: var(--accent-hover);
-	}
-
 	.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -485,7 +472,11 @@
 	.check {
 		display: flex;
 		align-items: center;
+		/* 체크박스는 16px 이지만 라벨 전체가 클릭 대상이다. 24px 를 넘겨 둔다. */
+		min-height: 24px;
+		align-self: flex-start;
 		gap: var(--gap-l4);
+		cursor: pointer;
 		color: var(--ink);
 		font-size: var(--text-body-sm);
 	}
@@ -494,52 +485,5 @@
 		margin: 0;
 		color: var(--ink-muted);
 		font-size: var(--text-caption);
-	}
-
-	input,
-	select,
-	textarea {
-		border: 1px solid var(--line);
-		border-radius: var(--radius-control);
-		padding: 8px 12px;
-		background-color: var(--surface);
-		color: var(--ink);
-		font-family: var(--font);
-		font-size: var(--text-body-sm);
-	}
-
-	textarea {
-		resize: vertical;
-	}
-
-	.check input {
-		width: auto;
-	}
-
-	.icon {
-		display: grid;
-		flex-shrink: 0;
-		place-items: center;
-		width: 26px;
-		height: 26px;
-		border: none;
-		border-radius: var(--radius-control);
-		background-color: transparent;
-		color: var(--ink-muted);
-		cursor: pointer;
-	}
-
-	.icon:hover:not(:disabled) {
-		background-color: var(--surface-raised);
-		color: var(--ink);
-	}
-
-	.icon:disabled {
-		cursor: not-allowed;
-		opacity: 0.3;
-	}
-
-	.icon.danger:hover:not(:disabled) {
-		color: var(--danger);
 	}
 </style>

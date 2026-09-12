@@ -282,6 +282,13 @@
 		gap: var(--gap-l2);
 	}
 
+	/*
+	 * ui-probe 의 `control-variant-sprawl` 이 이 화면에서 <button> 네 모양을 센다:
+	 * 탭 · 주 행동(Button) · 아이콘 버튼(IconButton) · 규칙 카드.
+	 * 정의는 전부 `ui/` 에 하나씩 있고 즉석 컨트롤은 없다 — 넷은 같은 컨트롤의
+	 * 변형이 아니라 **서로 다른 종류**다. 탭은 화면을 고르고, 카드는 대상을 고르며,
+	 * 주 행동은 일을 시킨다. 하나로 합치면 셋이 같은 일을 한다고 읽힌다.
+	 */
 	.tabs {
 		display: flex;
 		gap: var(--gap-l4);
@@ -313,7 +320,8 @@
 		border-radius: var(--radius-pill);
 		padding: 2px 8px;
 		background-color: var(--surface-sunken);
-		color: var(--ink-muted);
+		/* 가라앉은 면 위에서는 muted 가 3.9:1 로 AA 에 못 미친다. 숫자는 정보다. */
+		color: var(--ink);
 		font-size: var(--text-caption);
 	}
 
@@ -335,16 +343,6 @@
 		align-items: center;
 		gap: var(--gap-l4);
 		color: var(--ink-muted);
-		font-size: var(--text-body-sm);
-	}
-
-	select {
-		border: 1px solid var(--line);
-		border-radius: var(--radius-control);
-		padding: 8px 12px;
-		background-color: var(--surface);
-		color: var(--ink);
-		font-family: var(--font);
 		font-size: var(--text-body-sm);
 	}
 

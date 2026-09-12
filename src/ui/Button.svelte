@@ -5,8 +5,11 @@
 	/**
 	 * filled 는 주 행동 하나, outlined 는 그 짝, ghost 는 인라인 링크.
 	 * filled 둘을 나란히 쌓지 않는다.
+	 *
+	 * chip 은 "여기에 더할 수 있다" 를 말하는 점선 알약이다 — 규칙에 토큰을 붙이는
+	 * 자리가 쓴다. 즉석으로 새 버튼을 쓰지 않으려고 변형으로 들어와 있다.
 	 */
-	type Variant = 'filled' | 'outlined' | 'ghost';
+	type Variant = 'filled' | 'outlined' | 'ghost' | 'chip';
 
 	interface Props extends HTMLButtonAttributes {
 		variant?: Variant;
@@ -79,5 +82,20 @@
 
 	.ghost:hover:not(:disabled) {
 		text-decoration: underline;
+	}
+
+	.chip {
+		border-style: dashed;
+		border-color: var(--line-strong);
+		background-color: transparent;
+		padding: var(--space-4) var(--space-12);
+		color: var(--ink-muted);
+		font-size: var(--text-caption);
+	}
+
+	.chip:hover:not(:disabled) {
+		border-style: solid;
+		border-color: var(--accent);
+		color: var(--accent-hover);
 	}
 </style>

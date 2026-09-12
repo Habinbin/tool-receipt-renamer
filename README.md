@@ -121,3 +121,16 @@ pnpm check    # 타입
 pnpm bench    # 골든셋 정확도 (네트워크·키 필요)
 pnpm dev      # 단독으로 띄우기
 ```
+
+렌더 이후 검사(`skill:ui-probe`)는 개발 서버를 띄운 뒤 playwright 가 있는 repo 에서 돈다.
+컨트롤 대부분이 파일이 들어온 뒤에야 나타나므로 시나리오를 함께 준다.
+
+```bash
+node ../.agents/skills/ui-probe/scripts/ui_probe.mjs \
+  --base http://localhost:5183 --no-crawl --routes / \
+  --scenario <이 repo>/ui-probe.scenario.mjs
+```
+
+남는 경고 둘은 의도한 것이고 근거가 소스에 적혀 있다 — `<button>` 네 종류(탭·주 행동·
+아이콘·규칙 카드)는 같은 컨트롤의 변형이 아니라 서로 다른 종류이고, 체크박스는 16px 이되
+클릭 대상은 감싼 라벨이다.
