@@ -9,5 +9,7 @@ fixtures/receipts/
 fixtures/prepared/
 bench/results/
 
-# 로컬 전용 — 키는 커밋하지 않는다
-.env
+# 로컬 전용 — 키는 커밋하지 않는다. `.env*` 는 vercel link 가 만드는
+# `.env.local`(OIDC 토큰)까지 덮는다. `.vercel` 은 프로젝트 연결 정보다.
+.env*
+.vercel
