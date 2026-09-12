@@ -47,10 +47,8 @@
 
 		테두리를 두는 이유: 흰 면과 트레이의 차이는 1.29:1 이라 묶음 표시로는 되지만
 		(@color-is-not-structure #4) 누를 수 있는 것의 경계로는 모자라다 (#3 은 3:1 을
-		요구한다). `--line-strong` 조차 트레이 위에서 1.53:1 이라 `--ink-faint` 를 쓴다 —
-		트레이와 3.92:1, 칩 면과 5.07:1. 선 토큰이 아니라 잉크 토큰인 것이 이상해 보이지만,
-		이 테두리는 면을 나누는 선이 아니라 **내용의 옅은 판**이고 호스트가 테마를 바꾸면
-		글자와 같이 따라 움직여야 맞다.
+		요구한다). 색은 `--control-edge` 가 정한다 — 호스트의 옅은 선·잉크 토큰에
+		얹었다가 gr-toolbox 에서 2.56:1 로 주저앉았다. theme.css 의 주석 참조.
 
 		`Button` 의 `variant="chip"`(조각 더하기)은 **점선·투명**이다. 그래서 색 없이도
 		채워진 것=놓인 조각(데이터), 비어 있는 것=더하는 자리(행동)로 갈린다
@@ -61,7 +59,7 @@
 		align-items: center;
 		gap: var(--gap-l4);
 		max-width: 100%;
-		border: 1px solid var(--ink-faint);
+		border: 1px solid var(--control-edge);
 		border-radius: var(--radius-pill);
 		padding: var(--space-4) var(--space-12);
 		background-color: var(--surface);
