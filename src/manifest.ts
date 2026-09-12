@@ -12,7 +12,7 @@ export const manifest = {
 	title: '영수증 리네이머',
 	description:
 		'영수증·전표·승차권을 뭉텅이로 넣으면 읽어서 규칙대로 이름을 붙여 ZIP으로 내보냅니다. 상황별 규칙을 저장해 두고 갈아 끼웁니다.',
-	category: '문서 도구',
+	category: '영수증 도구',
 	icon: ReceiptTextIcon,
 	/** 'embed' — 툴박스 안 라우트로 렌더한다. @standalone-tool-deployment */
 	surface: 'embed' as const,
