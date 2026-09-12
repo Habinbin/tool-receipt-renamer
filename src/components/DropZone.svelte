@@ -98,7 +98,11 @@
 		padding: var(--space-32);
 		border: 1px dashed var(--line-strong);
 		border-radius: var(--radius-panel);
-		background-color: var(--surface);
+		/*
+			면을 깔지 않는다. 이 구역이 이미 음각(받는 자리)일 때 흰 상자를 얹으면
+			면이 두 겹이 되고, 어느 쪽이 받는 자리인지 흐려진다.
+		*/
+		background-color: transparent;
 		color: var(--ink-muted);
 		cursor: pointer;
 		text-align: center;

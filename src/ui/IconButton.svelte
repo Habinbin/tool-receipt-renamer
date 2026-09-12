@@ -14,13 +14,20 @@
 		title: string;
 		/** 누르면 되돌릴 수 없는 것 — 호버에서 위험색으로 물든다. */
 		danger?: boolean;
+		/**
+		 * 칩 안처럼 이미 좁은 자리에 들어가는 판.
+		 *
+		 * 24×24 를 밑돌지만 **감싼 칩 전체가 클릭 대상**이라 실제 표적은 그보다 크다.
+		 * 여기서 28px 을 고집하면 칩이 버튼 크기에 맞춰 부풀어 글자보다 커진다.
+		 */
+		compact?: boolean;
 		children: Snippet;
 	}
 
-	let { title, danger = false, children, ...rest }: Props = $props();
+	let { title, danger = false, compact = false, children, ...rest }: Props = $props();
 </script>
 
-<button class="icon-btn" class:danger {title} aria-label={title} {...rest}>
+<button class="icon-btn" class:danger class:compact {title} aria-label={title} {...rest}>
 	{@render children()}
 </button>
 
@@ -42,6 +49,12 @@
 			color 0.15s;
 	}
 
+	.icon-btn.compact {
+		width: 18px;
+		height: 18px;
+		color: inherit;
+	}
+
 	.icon-btn:hover:not(:disabled) {
 		background-color: var(--surface-raised);
 		color: var(--ink);
@@ -50,6 +63,12 @@
 	.icon-btn:disabled {
 		cursor: not-allowed;
 		opacity: 0.3;
+	}
+
+	.icon-btn.compact:hover:not(:disabled) {
+		/* 칩의 색 위에서는 면을 깔지 않는다 — 칩 안에 또 하나의 판이 생긴다. */
+		background-color: transparent;
+		opacity: 0.6;
 	}
 
 	.icon-btn.danger:hover:not(:disabled) {

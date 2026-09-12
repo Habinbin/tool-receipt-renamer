@@ -33,8 +33,14 @@ export default async function ({ page, base, probe }) {
 	// 성공하는데 아무 일도 일어나지 않는다 — 규칙 목록이 채워지면 하이드레이트된 것이다.
 	await page.waitForFunction(() => document.querySelectorAll('.count').length > 0);
 	await page.getByRole('button', { name: /규칙/ }).first().click();
-	await page.waitForSelector('select');
+	// 태그 트레이가 이 화면의 주 내용이다. select 는 접힌 '표기' 안으로 들어갔다.
+	await page.waitForSelector('.tray .grip');
 	out.push({ name: '규칙 탭', findings: await probe() });
+
+	// 접어 둔 것도 재야 한다 — 열었을 때 겹치거나 잘리는지는 닫힌 채로는 안 보인다.
+	for (const fold of await page.$$('details.fold summary')) await fold.click();
+	await page.waitForSelector('details.fold[open] select');
+	out.push({ name: '규칙 탭 (전부 펼침)', findings: await probe() });
 
 	if (files.length === 0) {
 		console.warn('fixtures/receipts 가 비어 있어 파일 단계를 건너뛴다.');

@@ -250,14 +250,70 @@ export function mergeRules(existing: NamingRule[], incoming: NamingRule[]): Nami
 	return [...existing, ...added];
 }
 
-/** 토큰을 한 칸 옮긴다. 끝에서 더 밀면 아무 일도 일어나지 않는다. */
-export function moveToken(rule: NamingRule, tokenId: string, delta: number): NamingRule {
-	const index = rule.tokens.findIndex((token) => token.id === tokenId);
-	const next = index + delta;
-	if (index < 0 || next < 0 || next >= rule.tokens.length) return rule;
+/*
+ * ── 순서 바꾸기 ────────────────────────────────────────────────────
+ *
+ * 토큰이 n 개면 **틈은 n+1 개**다. 틈 `g` 는 "인덱스 g 인 토큰의 바로 앞자리" 이고,
+ * 그래서 `g === n` 이 맨 뒤다. 맨 뒤 틈을 빠뜨리는 것이 재정렬 구현에서 가장 흔한
+ * 누락이라, 틈을 인덱스가 아니라 **경계**로 세는 이 정의를 쓴다 (@reorder-affordance #4).
+ *
+ * 산술을 Svelte 밖에 두는 이유: 드래그는 브라우저 없이 테스트할 수 없지만 "어디로
+ * 들어가는가" 는 순수 함수다. off-by-one 은 전부 여기서 잡힌다 (@tool-package-contract #3).
+ */
+
+/**
+ * 포인터가 어느 틈을 가리키는지.
+ *
+ * 항목의 앞 절반이면 그 앞 틈, 뒤 절반이면 뒤 틈. 정확히 중간점은 **앞 틈**으로
+ * 고정한다 — 경계에서 막대가 두 자리를 오가며 깜빡이지 않게.
+ *
+ * @param index 포인터가 올라가 있는 항목의 인덱스
+ * @param offset 그 항목 안에서의 좌표 (가로 흐름이면 x)
+ * @param extent 그 항목의 길이 (가로 흐름이면 width)
+ */
+export function gapForPointer(index: number, offset: number, extent: number): number {
+	return offset > extent / 2 ? index + 1 : index;
+}
+
+/** 그 틈에 놓아도 순서가 그대로인지 — 끌고 있는 항목의 앞·뒤 틈이 여기 해당한다. */
+export function isNoOpGap(from: number, gap: number): boolean {
+	return gap === from || gap === from + 1;
+}
+
+/**
+ * 인덱스 `from` 의 토큰을 틈 `gap` 으로 옮긴다.
+ *
+ * 변화가 없으면 **같은 객체를 그대로 돌려준다.** 호출하는 쪽이 `next !== rule` 하나로
+ * "정말 바뀌었나" 를 판정할 수 있고, 그래야 제자리에 놓았을 때 아무 일도 일어나지
+ * 않는다 (@reorder-affordance #7).
+ *
+ * 끌던 토큰을 먼저 빼내면 그 **뒤쪽** 틈이 하나씩 당겨진다 — `gap > from` 일 때만
+ * 1을 빼는 이유가 그것이고, 이 모듈이 격리하려는 off-by-one 이 이 한 줄이다.
+ */
+export function moveTokenToGap(rule: NamingRule, from: number, gap: number): NamingRule {
+	const length = rule.tokens.length;
+	if (from < 0 || from >= length) return rule;
+	if (gap < 0 || gap > length) return rule;
+	if (isNoOpGap(from, gap)) return rule;
+
 	const tokens = [...rule.tokens];
-	[tokens[index], tokens[next]] = [tokens[next], tokens[index]];
+	const [moved] = tokens.splice(from, 1);
+	tokens.splice(gap > from ? gap - 1 : gap, 0, moved);
 	return { ...rule, tokens };
+}
+
+/**
+ * 토큰을 한 칸 옮긴다. 끝에서 더 밀면 아무 일도 일어나지 않는다.
+ *
+ * 키보드 재정렬(`Alt+←/→`)이 쓴다. 드래그와 **같은 산술**을 지나가도록
+ * `moveTokenToGap` 위에 얹었다 — 두 경로가 다른 결과를 내면 버그를 한쪽에서만 본다.
+ */
+export function moveToken(rule: NamingRule, tokenId: string, delta: number): NamingRule {
+	const from = rule.tokens.findIndex((token) => token.id === tokenId);
+	const to = from + delta;
+	if (from < 0 || to < 0 || to >= rule.tokens.length) return rule;
+	// 뒤로 갈 때는 목적지 **다음** 틈이라야 그 항목을 건너뛴 자리가 된다.
+	return moveTokenToGap(rule, from, delta > 0 ? to + 1 : to);
 }
 
 export function addToken(rule: NamingRule, token: NamingToken): NamingRule {

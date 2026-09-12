@@ -33,6 +33,21 @@ export const FIELD_ORDER: ReceiptField[] = [
 	'originalName'
 ];
 
+/**
+ * 태그 칩의 색 인덱스.
+ *
+ * 칩에는 글자가 있지만, 여러 개가 한 줄에 흐르면 **색이 먼저 읽힌다** — 규칙 카드와
+ * 편집 패널을 나란히 놓았을 때 같은 조각인지 대조하는 것도 색이다. 그래서 필드마다
+ * 고정된 칸을 준다. 색값 자체는 `ui/theme.css` 의 `--tag-*` 에만 있다 (@design-contract).
+ *
+ * `FIELD_ORDER` 의 자리를 그대로 쓰므로, 필드를 추가하면 팔레트도 같이 늘려야 한다.
+ */
+export function fieldColorIndex(token: NamingToken): number | null {
+	if (token.kind === 'custom') return null; // 고정문구는 중립색 — 추출값이 아니다
+	const index = FIELD_ORDER.indexOf(token.field);
+	return index < 0 ? null : index;
+}
+
 /** 파일명에 쓸 수 없는 문자. 한글·공백은 막지 않는다 — 한국어 파일명이 기본이다. */
 const ILLEGAL = /[\\/:*?"<>|]/g;
 

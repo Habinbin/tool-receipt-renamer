@@ -5,13 +5,17 @@ import {
 	cloneRule,
 	createRule,
 	exportRules,
+	gapForPointer,
 	importRules,
+	isNoOpGap,
 	mergeRules,
 	moveToken,
+	moveTokenToGap,
 	normalizeRule,
 	readRules,
 	starterRules
 } from './rules';
+import type { ReceiptField } from './types';
 
 describe('readRules', () => {
 	it('한 번도 저장한 적 없으면 씨앗 규칙을 깐다', () => {
@@ -126,4 +130,141 @@ describe('mergeRules', () => {
 	function existingOne() {
 		return [starterRules()[0]];
 	}
+});
+
+/* ── 순서 바꾸기 ──────────────────────────────────────────────────── */
+
+const FIVE: ReceiptField[] = ['date', 'documentType', 'merchantName', 'amount', 'invoiceNumber'];
+
+/** 필드 다섯 개짜리 규칙. 순서를 `fields()` 로 읽어 비교한다. */
+function ruleOf(fields: ReceiptField[] = FIVE) {
+	return { ...createRule('순서'), tokens: fields.map(createFieldToken) };
+}
+
+function fields(rule: {
+	tokens: { kind: string; field?: ReceiptField }[];
+}): (ReceiptField | 'custom')[] {
+	return rule.tokens.map((token) => (token.kind === 'field' ? token.field! : 'custom'));
+}
+
+describe('gapForPointer', () => {
+	it('앞 절반이면 앞 틈, 뒤 절반이면 뒤 틈', () => {
+		expect(gapForPointer(2, 10, 100)).toBe(2);
+		expect(gapForPointer(2, 90, 100)).toBe(3);
+	});
+
+	it('마지막 항목의 뒤 절반은 마지막 틈을 가리킨다', () => {
+		// 이게 안 되면 "맨 뒤로 옮기기" 가 포인터로 도달 불가능해진다 (@reorder-affordance #4).
+		expect(gapForPointer(4, 90, 100)).toBe(5);
+	});
+
+	it('정확한 중간점은 앞 틈으로 고정한다', () => {
+		// 경계에서 막대가 두 자리를 오가며 깜빡이지 않도록.
+		expect(gapForPointer(2, 50, 100)).toBe(2);
+	});
+});
+
+describe('isNoOpGap', () => {
+	it('자기 앞·뒤 틈이면 제자리다', () => {
+		expect(isNoOpGap(4, 4)).toBe(true);
+		expect(isNoOpGap(4, 5)).toBe(true);
+	});
+
+	it('그 밖의 틈은 실제 이동이다', () => {
+		expect(isNoOpGap(4, 3)).toBe(false);
+		expect(isNoOpGap(4, 6)).toBe(false);
+	});
+});
+
+describe('moveTokenToGap', () => {
+	it('마지막 토큰을 맨 앞으로 옮긴다', () => {
+		expect(fields(moveTokenToGap(ruleOf(), 4, 0))).toEqual([
+			'invoiceNumber',
+			'date',
+			'documentType',
+			'merchantName',
+			'amount'
+		]);
+	});
+
+	it('첫 토큰을 맨 뒤로 옮긴다', () => {
+		// 마지막 틈(= 길이). 재정렬 구현에서 가장 흔히 빠지는 자리다.
+		expect(fields(moveTokenToGap(ruleOf(), 0, 5))).toEqual([
+			'documentType',
+			'merchantName',
+			'amount',
+			'invoiceNumber',
+			'date'
+		]);
+	});
+
+	it('표시한 틈과 정확히 같은 자리에 들어간다', () => {
+		expect(fields(moveTokenToGap(ruleOf(), 4, 2))).toEqual([
+			'date',
+			'documentType',
+			'invoiceNumber',
+			'merchantName',
+			'amount'
+		]);
+	});
+
+	it('위에서 내려오든 아래에서 올라가든 같은 틈이면 같은 결과다', () => {
+		const down = moveTokenToGap(ruleOf(), 0, 3); // date 를 2와 3 사이로
+		const up = moveTokenToGap(
+			ruleOf(['documentType', 'merchantName', 'date', 'amount', 'invoiceNumber']),
+			2,
+			2
+		);
+		expect(fields(down)).toEqual(fields(up));
+	});
+
+	it('제자리에 놓으면 아무 일도 일어나지 않는다', () => {
+		const rule = ruleOf();
+		expect(moveTokenToGap(rule, 4, 4)).toBe(rule);
+		expect(moveTokenToGap(rule, 4, 5)).toBe(rule);
+	});
+
+	it('범위 밖 입력이 목록을 망가뜨리지 않는다', () => {
+		const rule = ruleOf();
+		expect(moveTokenToGap(rule, -1, 2)).toBe(rule);
+		expect(moveTokenToGap(rule, 5, 2)).toBe(rule);
+		expect(moveTokenToGap(rule, 2, -1)).toBe(rule);
+		expect(moveTokenToGap(rule, 2, 6)).toBe(rule);
+	});
+
+	it('어느 조합에서도 토큰을 잃거나 복제하지 않는다', () => {
+		const rule = ruleOf();
+		const ids = new Set(rule.tokens.map((token) => token.id));
+		for (let from = 0; from < 5; from += 1) {
+			for (let gap = 0; gap <= 5; gap += 1) {
+				const next = moveTokenToGap(rule, from, gap);
+				expect(next.tokens).toHaveLength(5);
+				expect(new Set(next.tokens.map((token) => token.id))).toEqual(ids);
+			}
+		}
+	});
+
+	it('입력을 변형하지 않는다', () => {
+		const rule = ruleOf();
+		const before = fields(rule);
+		moveTokenToGap(rule, 4, 0);
+		expect(fields(rule)).toEqual(before);
+	});
+
+	it('토큰 밖 필드는 보존된다', () => {
+		const rule = { ...ruleOf(), separator: '-', extractionHint: '해외 출장' };
+		const next = moveTokenToGap(rule, 4, 0);
+		expect(next.separator).toBe('-');
+		expect(next.extractionHint).toBe('해외 출장');
+	});
+});
+
+describe('moveToken 과 moveTokenToGap 의 일치', () => {
+	it('키보드로 한 칸씩 옮긴 결과가 드래그 한 번과 같다', () => {
+		// 두 경로가 갈라지면 버그를 한쪽에서만 보게 된다.
+		let byKeyboard = ruleOf();
+		const id = byKeyboard.tokens[4].id;
+		for (let i = 0; i < 4; i += 1) byKeyboard = moveToken(byKeyboard, id, -1);
+		expect(fields(byKeyboard)).toEqual(fields(moveTokenToGap(ruleOf(), 4, 0)));
+	});
 });

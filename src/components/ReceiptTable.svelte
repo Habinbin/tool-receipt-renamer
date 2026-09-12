@@ -57,10 +57,16 @@
 
 				<div class="names">
 					<p class="original">{receipt.originalName}</p>
+					<!--
+						실패해도 이름을 지우지 않는다. 못 읽은 파일은 원본 이름으로 ZIP 에
+						들어가는데, 화면에서만 감추면 산출물과 어긋난다.
+					-->
+					<p class="final">
+						{names[index]}
+						{#if receipt.status === 'error'}<span class="as-is">원본 이름 그대로</span>{/if}
+					</p>
 					{#if receipt.status === 'error'}
 						<p class="error">{receipt.error}</p>
-					{:else}
-						<p class="final">{names[index]}</p>
 					{/if}
 				</div>
 
@@ -72,9 +78,15 @@
 					{:else if receipt.status === 'error'}
 						<span class="badge bad"><AlertTriangleIcon size={13} /> 실패</span>
 					{:else if missing[index].length > 0}
-						<span class="badge warn" title="이 값들을 못 읽어 이름에서 빠졌습니다">
+						<span class="badge warn">
 							<AlertTriangleIcon size={13} />
 							{missing[index].join(' · ')} 없음
+						</span>
+					{:else if receipt.info.warnings.length > 0}
+						<!-- 읽기 경고는 접어 두지 않는다 — 펼쳐야 보이면 아무도 안 본다. -->
+						<span class="badge warn">
+							<AlertTriangleIcon size={13} />
+							경고 {receipt.info.warnings.length}
 						</span>
 					{/if}
 				</div>
@@ -209,6 +221,14 @@
 	.error {
 		color: var(--danger);
 		font-size: var(--text-body-sm);
+	}
+
+	.as-is {
+		margin-left: var(--gap-l4);
+		color: var(--danger);
+		font-family: var(--font);
+		font-size: var(--text-caption);
+		font-weight: 400;
 	}
 
 	.state {
