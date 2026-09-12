@@ -27,7 +27,7 @@
 	import ReceiptTable from './components/ReceiptTable.svelte';
 	import RuleEditor from './components/RuleEditor.svelte';
 
-	import { fieldColorIndex, missingTokenLabels, resolveNames, tokenLabel } from './naming';
+	import { missingTokenLabels, resolveNames, tokenLabel } from './naming';
 	import { EMPTY_RECEIPT_INFO } from './receipt';
 	import {
 		ACTIVE_RULE_STORAGE_KEY,
@@ -263,10 +263,10 @@
 				<div class="step-head">
 					<h2>이름 규칙 고르기</h2>
 					{#if activeRule}
-						<!-- 적용 중인 조각을 여기 적어, 규칙 탭을 열어 확인할 이유를 없앤다. -->
+						<!-- 적용 중인 항목을 여기 적어, 규칙 탭을 열어 확인할 이유를 없앤다. -->
 						<p class="step-value">
 							{#each activeRule.tokens as token (token.id)}
-								<TagChip color={fieldColorIndex(token)} compact>{tokenLabel(token)}</TagChip>
+								<TagChip compact>{tokenLabel(token)}</TagChip>
 							{/each}
 						</p>
 					{/if}

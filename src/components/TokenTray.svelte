@@ -16,14 +16,14 @@
 
 	import IconButton from '../ui/IconButton.svelte';
 	import TagChip from '../ui/TagChip.svelte';
-	import { fieldColorIndex, tokenLabel } from '../naming';
+	import { fieldToneIndex, tokenLabel } from '../naming';
 	import { gapForPointer, isNoOpGap, moveToken, moveTokenToGap } from '../rules';
 	import type { NamingRule, NamingToken } from '../types';
 
 	interface Props {
 		rule: NamingRule;
 		onchange: (rule: NamingRule) => void;
-		/** 트레이 안 우측 끝에 붙는 것 — 조각을 더하는 자리. */
+		/** 트레이 안 우측 끝에 붙는 것 — 항목을 더하는 자리. */
 		append?: import('svelte').Snippet;
 	}
 
@@ -153,7 +153,7 @@
 			class:insert-after={barGap === rule.tokens.length && index === last}
 			data-slot
 		>
-			<TagChip color={fieldColorIndex(token)} dragging={dragIndex === index}>
+			<TagChip tone={fieldToneIndex(token)} dragging={dragIndex === index}>
 				<!--
 					손잡이는 진짜 버튼이다. `<li>` 에 tabindex 를 주면 보조기술이 그것을
 					조작 가능한 것으로 읽지 못하고, 칩 안의 ✕ 를 버튼 안에 넣으면 버튼이
@@ -174,7 +174,7 @@
 					<input
 						class="custom"
 						value={token.value}
-						placeholder="넣을 문구"
+						placeholder="직접 입력할 문구"
 						size={Math.max(4, token.value.length || 4)}
 						aria-label="고정문구 내용"
 						oninput={(event) =>
@@ -190,7 +190,7 @@
 				{/if}
 				{#snippet trailing()}
 					<IconButton
-						title="{tokenLabel(token)} 빼기"
+						title="{tokenLabel(token)} 제거"
 						compact
 						onclick={() =>
 							onchange({ ...rule, tokens: rule.tokens.filter((item) => item.id !== token.id) })}
@@ -211,7 +211,7 @@
 
 <style>
 	/*
-		받는 자리 — 눌린 면이 "여기에 조각을 놓는다" 를 말한다. 칩에 테두리를 두지 않는
+		받는 자리 — 눌린 면이 "여기에 항목을 놓는다" 를 말한다. 칩에 테두리를 두지 않는
 		이유도 여기 있다: 음각 위에 테두리 상자를 얹으면 경계가 두 줄로 보인다.
 	*/
 	.tray {
@@ -281,7 +281,7 @@
 		right: calc(-1 * var(--gap-l3) / 2 - var(--space-2) / 2);
 	}
 
-	/* 고정문구는 칩 안에서 바로 고친다 — 따로 입력 줄을 두면 조각과 값이 떨어진다. */
+	/* 고정문구는 칩 안에서 바로 고친다 — 따로 입력 줄을 두면 항목과 값이 떨어진다. */
 	.custom {
 		min-width: 0;
 		border: none;

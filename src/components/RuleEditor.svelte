@@ -20,8 +20,9 @@
 	import {
 		FIELD_LABELS,
 		FIELD_ORDER,
-		fieldColorIndex,
+		fieldToneIndex,
 		fileName,
+		nameSegments,
 		formatAmount,
 		formatDate,
 		tokenLabel
@@ -57,13 +58,22 @@
 	}: Props = $props();
 
 	let fileInput: HTMLInputElement;
-	/** 조각을 고르는 중. 트레이 안에서 열려, 고르면 바로 그 자리에 들어간다. */
+	/** 항목을 고르는 중. 트레이 안에서 열려, 고르면 바로 그 자리에 들어간다. */
 	let adding = $state(false);
 
 	const active = $derived(rules.find((rule) => rule.id === activeId) ?? rules[0]);
-	/** 규칙을 고치는 즉시 보이는 결과. 저장 버튼을 누르고 확인하게 만들지 않는다. */
+	/**
+	 * 규칙을 고치는 즉시 보이는 결과. 저장 버튼을 누르고 확인하게 만들지 않는다.
+	 *
+	 * 통짜 문자열이 아니라 **출처를 단 조각**으로 받는다. 위 트레이의 칩과 같은 색으로
+	 * 칠해 무엇이 무엇이 됐는지 잇기 때문이다 (@color-is-not-structure §같은 것을 잇는 색).
+	 */
 	const preview = $derived(
-		active === undefined ? '' : fileName(sample.info, sample.originalName, active)
+		active === undefined ? [] : nameSegments(sample.info, sample.originalName, active)
+	);
+	/** 항목 id → 잇는 색. 칩과 이름이 같은 표를 본다. */
+	const toneOf = $derived(
+		new Map((active?.tokens ?? []).map((token) => [token.id, fieldToneIndex(token)]))
 	);
 
 	/** 아직 쓰지 않은 필드만 고를 수 있다 — 같은 필드를 두 번 넣을 일은 드물다. */
@@ -111,10 +121,21 @@
 						aria-current={rule.id === activeId ? 'true' : undefined}
 						onclick={() => onselect(rule.id)}
 					>
-						<span class="rule-name">{rule.name}</span>
+						<span class="rule-head">
+							<span class="rule-name">{rule.name}</span>
+							<!--
+								규칙 셋을 가르는 것은 항목의 **종류**가 아니라 결과다 — 셋 다
+								날짜·사용처를 쓰지만 나오는 이름은 다르다. 전에는 그 차이를 칩
+								색으로 말하려 했고, 색은 아무것도 말하지 못했다
+								(@color-is-not-structure §색 대신 내용으로 구분한다).
+								편집 패널의 미리보기와 **같은 함수**를 쓴다. 따로 조립하면 카드가
+								약속한 이름과 실제로 붙는 이름이 갈라진다.
+							-->
+							<span class="rule-example">{fileName(sample.info, sample.originalName, rule)}</span>
+						</span>
 						<span class="rule-tray">
 							{#each rule.tokens as token (token.id)}
-								<TagChip color={fieldColorIndex(token)} compact>{tokenLabel(token)}</TagChip>
+								<TagChip compact>{tokenLabel(token)}</TagChip>
 							{/each}
 						</span>
 					</button>
@@ -131,16 +152,6 @@
 
 	{#if active !== undefined}
 		<section class="detail">
-			<!--
-				이 화면에 온 이유가 "그래서 이름이 뭐가 되나" 이므로, 답이 제목보다 세다.
-				카드(면+반경)가 아니라 헤어라인 띠로 둔다 — 위는 결과, 아래는 그 결과를
-				만드는 입력이라는 뜻이고, 상자를 하나 더 두면 트레이와 경계가 겹친다.
-			-->
-			<div class="preview">
-				<span class="preview-label">이 규칙으로 붙는 이름</span>
-				<p class="preview-name" aria-live="polite">{preview}</p>
-			</div>
-
 			<label class="field name">
 				<span>규칙 이름</span>
 				<input
@@ -151,14 +162,14 @@
 
 			<div class="group">
 				<div class="group-head">
-					<h3>이름의 순서</h3>
-					<span class="hint">끌어서 옮깁니다 · Alt+←/→</span>
+					<h3>이름 구성</h3>
+					<span class="hint">끌어서 순서 변경 · Alt+←/→</span>
 				</div>
 
 				<TokenTray rule={active} {onchange}>
 					{#snippet append()}
 						<Button variant="chip" onclick={() => (adding = !adding)}>
-							{adding ? '닫기' : '＋ 조각 더하기'}
+							{adding ? '닫기' : '＋ 항목 추가'}
 						</Button>
 						{#if adding}
 							{#each unused as field (field)}
@@ -178,9 +189,29 @@
 						{/if}
 					{/snippet}
 				</TokenTray>
+
+				<!--
+					결과는 그것을 만드는 트레이 **바로 아래**에 둔다. 위에 두면 칩과 이름이
+					멀어져, 같은 색으로 이어 놓아도 한눈에 대조되지 않는다. 이 자리면 원인 →
+					결과가 읽는 순서와 같아진다.
+
+					카드(면+반경)가 아니라 헤어라인 띠다 — 상자를 하나 더 두면 트레이와 경계가
+					겹친다. 조각을 span 으로 나눠도 보조기술은 문단 전체를 이어 읽으므로 숨긴
+					중복을 두지 않는다 — 두었더니 1px 짜리 그 줄이 `text-clipped` 로 잡혔다.
+				-->
+				<div class="preview">
+					<span class="preview-label">이렇게 저장됩니다</span>
+					<p class="preview-name" aria-live="polite">
+						{#each preview as segment, index (index)}<span
+								class="seg tone-{segment.tokenId === null
+									? 'none'
+									: (toneOf.get(segment.tokenId) ?? 'none')}">{segment.text}</span
+							>{/each}
+					</p>
+				</div>
 			</div>
 
-			<Disclosure title="표기" value={formatSummary}>
+			<Disclosure title="표기 방식" value={formatSummary}>
 				<div class="grid">
 					<label class="field">
 						<span>구분자</span>
@@ -217,7 +248,7 @@
 						</select>
 					</label>
 					<label class="field">
-						<span>못 읽은 값</span>
+						<span>못 읽은 항목</span>
 						<select
 							value={active.emptyFieldPolicy}
 							onchange={(event) =>
@@ -225,8 +256,8 @@
 									emptyFieldPolicy: event.currentTarget.value as NamingRule['emptyFieldPolicy']
 								})}
 						>
-							<option value="skip">건너뛴다</option>
-							<option value="placeholder">표시를 넣는다</option>
+							<option value="skip">건너뛰기</option>
+							<option value="placeholder">대신 문구 넣기</option>
 						</select>
 					</label>
 					<!--
@@ -234,7 +265,7 @@
 						자리는 두고 흐리게 한다 (@tool-ux-principles §2).
 					-->
 					<label class="field" class:muted={active.emptyFieldPolicy === 'skip'}>
-						<span>넣을 표시</span>
+						<span>대신 넣을 문구</span>
 						<input
 							value={active.placeholder}
 							disabled={active.emptyFieldPolicy === 'skip'}
@@ -255,7 +286,7 @@
 				</label>
 			</Disclosure>
 
-			<Disclosure title="읽을 때 줄 문맥" value={active.extractionHint ? '설정됨' : '없음'}>
+			<Disclosure title="읽을 때 참고할 설명" value={active.extractionHint ? '설정됨' : '없음'}>
 				<p class="note">
 					이 규칙으로 처리할 영수증이 어떤 것인지 한 줄로 알려 주면 값을 더 정확히 읽습니다. 비워
 					두어도 됩니다.
@@ -365,7 +396,9 @@
 		display: flex;
 		width: 100%;
 		flex-direction: column;
-		gap: var(--gap-l4);
+		/* 카드 안에 계층이 둘이다 — 정체(이름+결과)와 그 결과를 만드는 항목들.
+		   둘 사이는 l3, 이름과 결과 사이는 l4 로 3배 벌린다 (@spacing-ladder). */
+		gap: var(--gap-l3);
 		border: 1px solid var(--line);
 		border-radius: var(--radius-panel);
 		padding: var(--space-12);
@@ -379,10 +412,29 @@
 		border-color: var(--accent);
 	}
 
+	.rule-head {
+		display: flex;
+		min-width: 0;
+		flex-direction: column;
+		gap: var(--gap-l4);
+	}
+
 	.rule-name {
 		color: var(--ink);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
+	}
+
+	/* 편집 패널의 미리보기와 같은 성격이라 같은 서체를 쓴다 — 파일명은 고정폭에서
+	   자릿수가 맞아 훑기 쉽다. 카드 폭은 220–300px 로 좁으므로 넘치면 말줄임한다.
+	   두 줄로 흘리면 카드 높이가 규칙마다 달라져 목록의 리듬이 깨진다. */
+	.rule-example {
+		overflow: hidden;
+		color: var(--ink-muted);
+		font-family: var(--font-mono);
+		font-size: var(--text-caption);
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.rule-tray {
@@ -394,12 +446,12 @@
 		background-color: var(--tray);
 	}
 
+	/* 트레이 바로 아래에 붙는 띠. 위(원인)와 한 묶음이라 사이에 선을 긋지 않는다 —
+	   `.group` 의 간격이 이미 둘을 한 무리로 묶고 있다. */
 	.preview {
 		display: flex;
 		flex-direction: column;
 		gap: var(--gap-l4);
-		border-bottom: 1px solid var(--line);
-		padding-bottom: var(--space-16);
 	}
 
 	.preview-label {
@@ -410,12 +462,64 @@
 	.preview-name {
 		margin: 0;
 		overflow-x: auto;
-		color: var(--ink);
 		font-family: var(--font-mono);
 		font-size: var(--text-title);
 		font-weight: 600;
 		white-space: nowrap;
 	}
+
+	/*
+		이름 한 조각. 위 트레이의 칩과 **같은 색**이라 무엇이 무엇이 됐는지 이어 읽힌다
+		(@color-is-not-structure §같은 것을 잇는 색). 색은 글자에만 온다 — 면을 칠하면
+		이름이 알록달록한 띠가 되어 파일명으로 안 읽힌다.
+
+		구분자·확장자는 어느 항목의 것도 아니므로 `tone-none` 으로 기본 잉크다. 그래서
+		색이 칠해진 부분이 곧 "규칙이 채운 자리" 가 된다.
+	*/
+	.seg {
+		color: var(--tone, var(--ink));
+	}
+
+	.seg.tone-0 {
+		--tone: var(--tone-0);
+	}
+
+	.seg.tone-1 {
+		--tone: var(--tone-1);
+	}
+
+	.seg.tone-2 {
+		--tone: var(--tone-2);
+	}
+
+	.seg.tone-3 {
+		--tone: var(--tone-3);
+	}
+
+	.seg.tone-4 {
+		--tone: var(--tone-4);
+	}
+
+	.seg.tone-5 {
+		--tone: var(--tone-5);
+	}
+
+	.seg.tone-6 {
+		--tone: var(--tone-6);
+	}
+
+	.seg.tone-7 {
+		--tone: var(--tone-7);
+	}
+
+	.seg.tone-8 {
+		--tone: var(--tone-8);
+	}
+
+	.seg.tone-none {
+		--tone: var(--tone-none);
+	}
+
 
 	.group {
 		display: flex;
