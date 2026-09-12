@@ -6,6 +6,15 @@
 핵심은 **추출과 이름이 분리되어 있다**는 것이다. 한 번 읽어 둔 값은 규칙을 바꿔도
 그대로 남고 이름만 다시 조립된다. 그래서 규칙을 갈아 끼우는 데 돈도 시간도 들지 않는다.
 
+## 어디에 떠 있나
+
+껍데기가 둘이고 동작은 하나다 (@standalone-tool-deployment).
+
+| 껍데기 | 주소 | 비고 |
+| --- | --- | --- |
+| 단독 (`app/`) | https://receipt-renamer-beta.vercel.app | Vercel. `GEMINI_API_KEY` 는 프로젝트 환경변수 |
+| betlab-toolbox | `/receipt-renamer` | 연구실 서버(adapter-node). 툴박스가 키를 주입한다 |
+
 ## 클릭 예산 (@tool-ux-principles §1)
 
 | 경로               | 행동 수                        |
