@@ -16,7 +16,7 @@
 
 	import IconButton from '../ui/IconButton.svelte';
 	import TagChip from '../ui/TagChip.svelte';
-	import { fieldToneIndex, tokenLabel } from '../naming';
+	import { fieldColorIndex, tokenLabel } from '../naming';
 	import { gapForPointer, isNoOpGap, moveToken, moveTokenToGap } from '../rules';
 	import type { NamingRule, NamingToken } from '../types';
 
@@ -153,7 +153,7 @@
 			class:insert-after={barGap === rule.tokens.length && index === last}
 			data-slot
 		>
-			<TagChip tone={fieldToneIndex(token)} dragging={dragIndex === index}>
+			<TagChip color={fieldColorIndex(token)} dragging={dragIndex === index}>
 				<!--
 					손잡이는 진짜 버튼이다. `<li>` 에 tabindex 를 주면 보조기술이 그것을
 					조작 가능한 것으로 읽지 못하고, 칩 안의 ✕ 를 버튼 안에 넣으면 버튼이
@@ -211,21 +211,29 @@
 
 <style>
 	/*
-		받는 자리 — 눌린 면이 "여기에 항목을 놓는다" 를 말한다. 칩에 테두리를 두지 않는
-		이유도 여기 있다: 음각 위에 테두리 상자를 얹으면 경계가 두 줄로 보인다.
+		**면을 칠해 "여기에 항목이 들어간다" 를 말하지 않는다.** 전에는 음각 판을 깔았는데,
+		담김은 구조이지 상태가 아니고 구조는 간격이 말한다 (@color-is-not-structure).
+		그 판은 파스텔 칩과 1.1:1 이라 경계 노릇도 못 하면서 화면만 한 겹 덮고 있었다.
+
+		칩끼리는 l4(4px)로 붙여 한 덩어리로 읽히게 하고, 바깥은 `.group` 의 l3(12px)이
+		가른다. 3배 차이가 "이 넷은 한 묶음" 을 판보다 정확히 말한다.
 	*/
 	.tray {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: var(--gap-l3);
+		gap: var(--gap-l4);
 		margin: 0;
-		border-radius: var(--radius-panel);
-		padding: var(--space-12);
-		background-color: var(--tray);
+		padding: 0;
 		list-style: none;
 		/* 터치에서 칩을 끌 때 페이지가 같이 스크롤되지 않게 한다. */
 		touch-action: none;
+	}
+
+	/* 더하는 자리는 놓인 항목들과 성격이 다르다 — 데이터 옆에 붙은 행동이므로
+	   한 단 띄워 묶음 밖에 둔다 (@information-architecture #3). */
+	.slot.add {
+		margin-left: var(--gap-l3);
 	}
 
 	.slot {

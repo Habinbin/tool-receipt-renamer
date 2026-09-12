@@ -10,6 +10,7 @@
 	 * 같은 그림이 크기만 다르게 두 번 있다.
 	 */
 	import PlusIcon from '@lucide/svelte/icons/plus';
+import XIcon from '@lucide/svelte/icons/x';
 
 	import Button from '../ui/Button.svelte';
 	import Disclosure from '../ui/Disclosure.svelte';
@@ -20,9 +21,8 @@
 	import {
 		FIELD_LABELS,
 		FIELD_ORDER,
-		fieldToneIndex,
+		fieldColorIndex,
 		fileName,
-		nameSegments,
 		formatAmount,
 		formatDate,
 		tokenLabel
@@ -62,18 +62,9 @@
 	let adding = $state(false);
 
 	const active = $derived(rules.find((rule) => rule.id === activeId) ?? rules[0]);
-	/**
-	 * 규칙을 고치는 즉시 보이는 결과. 저장 버튼을 누르고 확인하게 만들지 않는다.
-	 *
-	 * 통짜 문자열이 아니라 **출처를 단 조각**으로 받는다. 위 트레이의 칩과 같은 색으로
-	 * 칠해 무엇이 무엇이 됐는지 잇기 때문이다 (@color-is-not-structure §같은 것을 잇는 색).
-	 */
+	/** 규칙을 고치는 즉시 보이는 결과. 저장 버튼을 누르고 확인하게 만들지 않는다. */
 	const preview = $derived(
-		active === undefined ? [] : nameSegments(sample.info, sample.originalName, active)
-	);
-	/** 항목 id → 잇는 색. 칩과 이름이 같은 표를 본다. */
-	const toneOf = $derived(
-		new Map((active?.tokens ?? []).map((token) => [token.id, fieldToneIndex(token)]))
+		active === undefined ? '' : fileName(sample.info, sample.originalName, active)
 	);
 
 	/** 아직 쓰지 않은 필드만 고를 수 있다 — 같은 필드를 두 번 넣을 일은 드물다. */
@@ -135,7 +126,7 @@
 						</span>
 						<span class="rule-tray">
 							{#each rule.tokens as token (token.id)}
-								<TagChip compact>{tokenLabel(token)}</TagChip>
+								<TagChip color={fieldColorIndex(token)} compact>{tokenLabel(token)}</TagChip>
 							{/each}
 						</span>
 					</button>
@@ -168,46 +159,48 @@
 
 				<TokenTray rule={active} {onchange}>
 					{#snippet append()}
-						<Button variant="chip" onclick={() => (adding = !adding)}>
-							{adding ? '닫기' : '＋ 항목 추가'}
-						</Button>
+						<!--
+							세 가지 일에는 세 가지 모양이 붙는다 — 같은 모양은 같은 일을 뜻한다고
+							읽히기 때문이다. 전에는 셋 다 점선 알약이라, 후보를 고르려다 닫히고
+							닫으려다 항목이 붙었다.
+
+							· 더할 수 있는 빈 자리 → 점선 알약 (`variant="chip"`)
+							· 고를 수 있는 후보  → 실선 컨트롤 (`variant="outlined"`)
+							· 고르기를 그만둠    → 아이콘 버튼
+						-->
 						{#if adding}
 							{#each unused as field (field)}
 								<Button
-									variant="chip"
+									variant="outlined"
+									compact
 									onclick={() => onchange(addToken(active, createFieldToken(field)))}
 								>
 									{FIELD_LABELS[field]}
 								</Button>
 							{/each}
 							<Button
-								variant="chip"
+								variant="outlined"
+								compact
 								onclick={() => onchange(addToken(active, createCustomToken()))}
 							>
 								고정문구
 							</Button>
+							<IconButton title="항목 고르기 닫기" onclick={() => (adding = false)}>
+								<XIcon size={15} />
+							</IconButton>
+						{:else}
+							<Button variant="chip" onclick={() => (adding = true)}>＋ 항목 추가</Button>
 						{/if}
 					{/snippet}
 				</TokenTray>
 
 				<!--
-					결과는 그것을 만드는 트레이 **바로 아래**에 둔다. 위에 두면 칩과 이름이
-					멀어져, 같은 색으로 이어 놓아도 한눈에 대조되지 않는다. 이 자리면 원인 →
-					결과가 읽는 순서와 같아진다.
-
-					카드(면+반경)가 아니라 헤어라인 띠다 — 상자를 하나 더 두면 트레이와 경계가
-					겹친다. 조각을 span 으로 나눠도 보조기술은 문단 전체를 이어 읽으므로 숨긴
-					중복을 두지 않는다 — 두었더니 1px 짜리 그 줄이 `text-clipped` 로 잡혔다.
+					결과는 그것을 만드는 항목들 **바로 아래**에 둔다. 위에 두면 무엇을 고쳤을 때
+					무엇이 바뀌는지 눈이 멀리 오간다. 이 자리면 원인 → 결과가 읽는 순서와 같다.
 				-->
 				<div class="preview">
 					<span class="preview-label">이렇게 저장됩니다</span>
-					<p class="preview-name" aria-live="polite">
-						{#each preview as segment, index (index)}<span
-								class="seg tone-{segment.tokenId === null
-									? 'none'
-									: (toneOf.get(segment.tokenId) ?? 'none')}">{segment.text}</span
-							>{/each}
-					</p>
+					<p class="preview-name" aria-live="polite">{preview}</p>
 				</div>
 			</div>
 
@@ -437,13 +430,11 @@
 		white-space: nowrap;
 	}
 
+	/* 카드 안에서도 판을 깔지 않는다 — 위 이름·결과와는 l3, 칩끼리는 l4 로 갈린다. */
 	.rule-tray {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--gap-l4);
-		border-radius: var(--radius-control);
-		padding: var(--space-8);
-		background-color: var(--tray);
 	}
 
 	/* 트레이 바로 아래에 붙는 띠. 위(원인)와 한 묶음이라 사이에 선을 긋지 않는다 —
@@ -468,57 +459,6 @@
 		white-space: nowrap;
 	}
 
-	/*
-		이름 한 조각. 위 트레이의 칩과 **같은 색**이라 무엇이 무엇이 됐는지 이어 읽힌다
-		(@color-is-not-structure §같은 것을 잇는 색). 색은 글자에만 온다 — 면을 칠하면
-		이름이 알록달록한 띠가 되어 파일명으로 안 읽힌다.
-
-		구분자·확장자는 어느 항목의 것도 아니므로 `tone-none` 으로 기본 잉크다. 그래서
-		색이 칠해진 부분이 곧 "규칙이 채운 자리" 가 된다.
-	*/
-	.seg {
-		color: var(--tone, var(--ink));
-	}
-
-	.seg.tone-0 {
-		--tone: var(--tone-0);
-	}
-
-	.seg.tone-1 {
-		--tone: var(--tone-1);
-	}
-
-	.seg.tone-2 {
-		--tone: var(--tone-2);
-	}
-
-	.seg.tone-3 {
-		--tone: var(--tone-3);
-	}
-
-	.seg.tone-4 {
-		--tone: var(--tone-4);
-	}
-
-	.seg.tone-5 {
-		--tone: var(--tone-5);
-	}
-
-	.seg.tone-6 {
-		--tone: var(--tone-6);
-	}
-
-	.seg.tone-7 {
-		--tone: var(--tone-7);
-	}
-
-	.seg.tone-8 {
-		--tone: var(--tone-8);
-	}
-
-	.seg.tone-none {
-		--tone: var(--tone-none);
-	}
 
 
 	.group {

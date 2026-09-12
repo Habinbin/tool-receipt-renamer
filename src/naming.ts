@@ -34,19 +34,16 @@ export const FIELD_ORDER: ReceiptField[] = [
 ];
 
 /**
- * 항목을 잇는 색의 칸.
+ * 태그 칩의 색 인덱스.
  *
- * **범주를 칠하는 색이 아니다.** 편집 화면은 항목 칩과 결과 이름의 해당 부분을 같은
- * 색으로 칠해 둘이 같은 것임을 보인다 — 색이 혼자서 뜻을 갖는 게 아니라 **두 자리가
- * 짝지어진 것**을 보이는 데 쓴다 (@color-is-not-structure §같은 것을 잇는 색).
+ * 칩에는 글자가 있지만, 여러 개가 한 줄에 흐르면 **색이 먼저 읽힌다** — 규칙 카드와
+ * 편집 패널을 나란히 놓았을 때 같은 조각인지 대조하는 것도 색이다. 그래서 필드마다
+ * 고정된 칸을 준다. 색값 자체는 `ui/theme.css` 의 `--tag-*` 에만 있다 (@design-contract).
  *
- * 그래서 자리는 `FIELD_ORDER` 로 고정한다. 순서를 바꾸는 중에 색이 따라 움직이면
- * 무엇이 어디로 갔는지 눈으로 쫓을 수 없다.
- *
- * 직접 입력한 문구는 읽어 온 값이 아니라 사람이 적은 글자라 이을 짝이 없다 — `null`.
+ * `FIELD_ORDER` 의 자리를 그대로 쓰므로, 필드를 추가하면 팔레트도 같이 늘려야 한다.
  */
-export function fieldToneIndex(token: NamingToken): number | null {
-	if (token.kind === 'custom') return null;
+export function fieldColorIndex(token: NamingToken): number | null {
+	if (token.kind === 'custom') return null; // 고정문구는 중립색 — 추출값이 아니다
 	const index = FIELD_ORDER.indexOf(token.field);
 	return index < 0 ? null : index;
 }
