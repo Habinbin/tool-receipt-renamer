@@ -161,12 +161,30 @@
 .tool-root textarea {
 	border: 1px solid var(--line);
 	border-radius: var(--radius-control);
-	padding: 8px 12px;
 	background-color: var(--surface);
 	color: var(--ink);
 	font-family: var(--font);
 	font-size: var(--text-body-sm);
 	line-height: 1.4;
+}
+
+.tool-root input:not([type='checkbox']):not([type='radio']),
+.tool-root textarea {
+	padding: 8px 12px;
+}
+
+/*
+	셀렉트는 **오른쪽 여백을 건드리지 않는다.**
+
+	호스트가 `@tailwindcss/forms` 를 쓰면 셰브론을 배경 이미지로 그리고 그만큼
+	`padding-right` 를 예약한다. 거기에 좌우를 한꺼번에 지정하면 예약이 사라지고 긴
+	선택값이 화살표 밑으로 들어간다 — gr-toolbox 에서 실제로 29px 자리를 12px 로
+	덮고 있었다. 단독 실행에서는 브라우저 기본 화살표가 자기 자리를 갖는다.
+	@control-contract #3
+*/
+.tool-root select {
+	padding-block: 8px;
+	padding-left: 12px;
 }
 
 .tool-root textarea {
